@@ -54,3 +54,5 @@ build/
 # Uploads
 uploads/
 temp/
+
+.venv/

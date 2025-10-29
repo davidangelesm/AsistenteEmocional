@@ -4,12 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/auth_service.dart';
 
-// lib/middleware/auth_middleware.dart
-
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../services/auth_service.dart';
-
 class AuthMiddleware extends GetMiddleware {
   final AuthService _authService = AuthService();
 

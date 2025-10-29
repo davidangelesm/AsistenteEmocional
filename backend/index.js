@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -22,7 +23,9 @@ const aiModelRoutes = require('./src/routes/ai-models');
 const preferenceRoutes = require('./src/routes/preferences');
 
 // Importar el servicio de Google GenAI
-const { generateContent } = require('./src/services/googleGenAIService');
+// const { generateContent } = require('./src/services/googleGenAIService');
+
+const lmStudioService = require('./src/services/lmStudioService'); // Asegúrate que la ruta sea correcta
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -90,71 +93,64 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/ai-models', aiModelRoutes);
 app.use('/api/preferences', preferenceRoutes);
 
-// Endpoint para probar Google GenAI
-app.post('/api/genai', async (req, res) => {
+// Endpoint para generar contenido con LM Studio
+app.post('/api/genai', async (req, res, next) => {
   try {
-    console.log('📨 Request recibido');
-    console.log('📋 Headers:', req.headers);
+    console.log('📨 Request recibido para LM studio');
+    // console.log('📋 Headers:', req.headers);
     console.log('📦 Body completo:', req.body);
-    console.log('📦 Body type:', typeof req.body);
+    // console.log('📦 Body type:', typeof req.body);
     
-    const { contents, options = {} } = req.body;
-    
-    if (!contents) {
-      return res.status(400).json({ 
-        error: 'El campo contents es requerido.',
-        message: 'Debes proporcionar un mensaje para generar contenido.' 
+    // --- Adaptación para lmStudioService ---
+    const { prompt, history = [] } = req.body; // Extrae prompt e history (opcional)
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return res.status(400).json({
+        error: 'El campo \'prompt\' es requerido y debe ser un texto no vacío.',
+        message: 'Debes proporcionar un mensaje (prompt) para generar contenido.'
       });
     }
 
-    const response = await generateContent(contents, options);
-    res.json({ 
-      text: response,
-      status: 'success',
-      timestamp: new Date().toISOString()
-    });
+    // Asegúrate de que el historial tenga el formato correcto si existe
+    if (!Array.isArray(history) || !history.every(msg => typeof msg === 'object' && msg !== null && typeof msg.role === 'string' && typeof msg.content === 'string')) {
+       console.warn("Formato de historial inválido recibido. Usando historial vacío.");
+       // Podrías devolver un error 400 si el historial es obligatorio o tiene un formato incorrecto estricto
+       // return res.status(400).json({ error: 'Formato de historial inválido.' });
+       history = []; // Usa un historial vacío si el formato no es el esperado
+    }
+
+    // Llama al nuevo servicio
+    const generatedContent = await lmStudioService.generateContent(prompt, history);
+
+    if (generatedContent !== null) { // Verifica si la respuesta no es null (indicando error en el servicio)
+      res.json({
+        respuesta: generatedContent, // Cambiado 'text' a 'respuesta' para coincidir con tu código Flutter (si es necesario)
+        status: 'success',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Error específico devuelto por el servicio lmStudioService (ya logueado en consola allí)
+      res.status(500).json({
+        error: 'Error al generar contenido con el modelo local.',
+        message: 'No se pudo obtener respuesta del servidor de LM Studio.'
+      });
+    }
   } catch (error) {
-    console.error('Error al generar contenido con Google GenAI:', error);
-    res.status(500).json({ 
-      error: 'Error interno del servidor',
-      message: 'No se pudo procesar la solicitud de IA',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    // Maneja cualquier otro error inesperado en esta ruta
+    console.error("Error inesperado en la ruta /api/genai:", error);
+    // Pasa el error al manejador global
+    next(error); // Llama al globalErrorHandler
+    /* Alternativamente, puedes enviar una respuesta directa:
+    res.status(500).json({
+        error: 'Error interno del servidor.',
+        message: 'Ocurrió un error inesperado al procesar la solicitud de IA.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+    */
   }
 });
 
-// Endpoint para validar la configuración de IA
-app.get('/api/genai/status', async (req, res) => {
-  try {
-    const { validateApiKey } = require('./src/services/googleGenAIService');
-    const isValid = await validateApiKey();
-    res.json({
-      status: isValid ? 'connected' : 'disconnected',
-      message: isValid ? 'API de IA funcionando correctamente' : 'Error en la configuración de IA'
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Error verificando el estado de la IA'
-    });
-  }
-});
 
-// Endpoint para obtener modelos disponibles
-app.get('/api/genai/models', async (req, res) => {
-  try {
-    const { getAvailableModels } = require('./src/services/googleGenAIService');
-    const models = await getAvailableModels();
-    res.json({
-      models,
-      count: models.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Error obteniendo modelos disponibles'
-    });
-  }
-});
 
 // Ruta de prueba
 app.get('/', (req, res) => {

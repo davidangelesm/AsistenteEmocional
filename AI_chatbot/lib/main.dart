@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
     return Obx(
       () => GetMaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'BROER-BOT',
+        title: 'Asistente Emocional',
 
         // ─── Temas ───────────────────────────────────────────────────────────────
         theme: AppTheme.lightTheme,

@@ -45,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 48),
                 Text(
-                  'BROER-BOT',
+                  'Asistente Emocional',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

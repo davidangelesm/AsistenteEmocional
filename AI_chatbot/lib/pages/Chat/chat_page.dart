@@ -129,7 +129,7 @@ class ChatPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'BROER-BOT está escribiendo...',
+                                'Asistente Emocional está escribiendo...',
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                   fontSize: 15,
@@ -242,7 +242,7 @@ class ChatPage extends StatelessWidget {
           },
         ),
         title: Text(
-          'BROER-BOT',
+          'Asistente Emocional',
           style: textTheme.titleLarge?.copyWith(
             color: colorScheme.onBackground,
             fontWeight: FontWeight.bold,

@@ -40,7 +40,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // Título de bienvenida
                 Text(
-                  'BIENVENIDO A BROER-BOT',
+                  'BIENVENIDO A Asistente Emocional',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
